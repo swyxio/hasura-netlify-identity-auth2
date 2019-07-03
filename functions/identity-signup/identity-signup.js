@@ -43,7 +43,7 @@ exports.handler = async function(event, context) {
   console.log(responseBodyString);
 
   const result = await fetch(
-    hgeEndpoint + "/v1/graphql",
+    "https://netlify-stream.herokuapp.com/v1/graphql",
     {
       method: "POST",
       body: responseBodyString,
