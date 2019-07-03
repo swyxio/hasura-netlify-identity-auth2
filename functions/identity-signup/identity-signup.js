@@ -7,8 +7,7 @@
 const fetch = require("node-fetch");
 
 exports.handler = async function(event, context) {
-  const data = JSON.parse(event.body);
-  const { user } = data;
+  const { user } = JSON.parse(event.body);
 
   const responseBody = {
     app_metadata: {
