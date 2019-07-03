@@ -4,7 +4,7 @@
 // more:
 // https://www.netlify.com/blog/2019/02/21/the-role-of-roles-and-how-to-set-them-in-netlify-identity/
 // https://www.netlify.com/docs/functions/#identity-and-functions
-const axios = require('axios');
+const fetch = require("node-fetch");
 
 exports.handler = async function(event, context) {
   const data = JSON.parse(event.body);
@@ -13,14 +13,16 @@ exports.handler = async function(event, context) {
   const responseBody = {
     app_metadata: {
       roles:
-        user.email.split("@")[1] === "trust-this-company.com"
+        user.email.split("@")[1] ===
+        "trust-this-company.com"
           ? ["editor"]
           : ["visitor"],
       my_user_info: "this is some user info"
     },
     user_metadata: {
       ...user.user_metadata, // append current user metadata
-      custom_data_from_function: "hurray this is some extra metadata"
+      custom_data_from_function:
+        "hurray this is some extra metadata"
     }
   };
 
@@ -32,24 +34,39 @@ exports.handler = async function(event, context) {
       }
     }    
   `,
-  variables: {
-    id: user.id,
-    email: user.email,
-    name: user.user_metadata.full_name
-  }
+    variables: {
+      id: user.id,
+      email: user.email,
+      name: user.user_metadata.full_name
+    }
   });
 
-  console.log(responseBodyString)
+  console.log(responseBodyString);
 
-  const response = await axios.post('https://netlify-stream.herokuapp.com/v1/graphql',{
-    headers: {
-      ["x-hasura-admin-secret"]: process.env.HASURA_SECRET
-    },
-    body: responseBodyString
-  })
+  const result = await fetch(
+    hgeEndpoint + "/v1/graphql",
+    {
+      method: "POST",
+      body: responseBodyString,
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret":
+          process.env.HASURA_SECRET
+      }
+    }
+  );
+  const { errors, data } = await result.json();
 
-  return {
-    statusCode: 200,
-    body: JSON.stringify(responseBody)
-  };
+  if (errors) {
+    console.log(errors);
+    return {
+      statusCode: 500,
+      body: "Something is wrong"
+    };
+  } else {
+    return {
+      statusCode: 200,
+      body: JSON.stringify(responseBody)
+    };
+  }
 };
